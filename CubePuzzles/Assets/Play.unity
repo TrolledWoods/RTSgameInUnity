@@ -302,7 +302,7 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 801490370}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1, y: 9.11, z: 1}
+  m_LocalPosition: {x: 7.01, y: 23.21, z: 7.66}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -402,8 +402,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9de225be9206f814ea2421efdabcbd37, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  placing: {fileID: 1723542739005188, guid: 1f7695f06a58aa5479597ed4ee3634e8, type: 2}
-  map: {fileID: 1043435134}
   selection_graphic: {fileID: 801490370}
   boundary_width: 50
   boundary_height: 40
@@ -421,7 +419,7 @@ GameObject:
   - component: {fileID: 1043435136}
   - component: {fileID: 1043435137}
   m_Layer: 8
-  m_Name: WorldLoader
+  m_Name: GameController
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -445,11 +443,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6c49f5407ab7ef84fae293dd30e0a3b3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  water_level: 5
-  camera_x: 0
-  camera_z: 0
-  width: 0
-  height: 0
 --- !u!4 &1043435135
 Transform:
   m_ObjectHideFlags: 0
