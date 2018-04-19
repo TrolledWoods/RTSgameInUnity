@@ -23,11 +23,15 @@ namespace Assets.Scripts.WorldGenerators
 
         public override World.Vertex Generate_Vertex(int x, int z)
         {
+            // Calculate the height of the tile
             int tileHeight = Mathf.FloorToInt(Mathf.PerlinNoise(x * roughness, z * roughness) * scale);
+            
+            // Get some tileData based on the current biome
             VertexType tileData = (VertexType)Mathf.FloorToInt(
                 Mathf.Clamp(Mathf.PerlinNoise(x * biome_delta, z * biome_delta) * 
                 (int)VertexType.N_TILES, 0, (int)VertexType.N_TILES - 1));
 
+            // Check if the height is lower than the water level, in which case make it sand or dirt
             if (Mathf.Abs(tileHeight - water_level) < 1)
             {
                 tileData = VertexType.Sand;
