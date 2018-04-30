@@ -16,12 +16,12 @@ namespace Assets.Scripts
         public struct Vertex
         {
             public int Height;
-            public VertexType Type;
+            public Stack<VertexType> Type;
 
-            public Vertex(int height, VertexType type)
+            public Vertex(Stack<VertexType> blocks)
             {
-                Height = height;
-                Type = type;
+                Height = blocks.Count;
+                Type = blocks;
             }
         }
 
@@ -32,8 +32,8 @@ namespace Assets.Scripts
         
         public static Color32[] Tile_Colors;
 
-        public int Water_Level = 4; // TEMPORARY VARIABLE UNTIL MORE INTERESTING OPTIONS
-        
+        public float Origin;
+
         public Vertex[] Vertices;
         public Tile[] Tiles;
 
@@ -56,6 +56,7 @@ namespace Assets.Scripts
             this.tile_height = tile_height;
 
             this.generator = generator;
+            this.Origin = generator.GetOrigin();
 
             // If the tile colors are not initialized, initialize them with
             // their default value
@@ -72,19 +73,17 @@ namespace Assets.Scripts
 
         public void Generate_World()
         {
-            Vertices = new Vertex[Vertex_Width * Vertex_Height];
+            Vertices = generator.Generate_World(Vertex_Width, Vertex_Height);
+        }
 
-            int index = 0;
+        public void SetVertex(int x, int y, Vertex v)
+        {
+            Vertices[x + y * Vertex_Width] = v;
+        }
 
-            for (int j = 0; j < Vertex_Height; j++)
-            {
-                for (int i = 0; i < Vertex_Width; i++)
-                {
-                    Vertices[index] = generator.Generate_Vertex(i, j);
-
-                    index++;
-                }
-            }
+        public Vertex GetVertex(int x, int y)
+        {
+            return Vertices[x + y * Vertex_Width];
         }
 
     }

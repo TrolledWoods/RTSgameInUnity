@@ -2,6 +2,8 @@
 {
     public abstract class World_Generator
     {
-        public abstract World.Vertex Generate_Vertex(int x, int z);
+        public abstract float GetOrigin();
+
+        public abstract World.Vertex[] Generate_World(int width, int height);
     }
 }

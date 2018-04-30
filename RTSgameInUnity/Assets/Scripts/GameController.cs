@@ -8,11 +8,16 @@ public class GameController : MonoBehaviour {
 
     public Material world_material;
 
+    World w;
+    new WorldRenderer renderer;
+
+    World.Vertex v;
+
     void Start()
     {
-        World w = new World(2000, 2000,
-            new Classic(0.03f, 18f, 0.01f, 6));
-        WorldRenderer renderer = new WorldRenderer(
+        w = new World(2000, 2000,
+            new Classic(0.03f, 30f, 0.005f, 20));
+        renderer = new WorldRenderer(
             this.gameObject, w,
             new Color32[]
             {
@@ -20,6 +25,13 @@ public class GameController : MonoBehaviour {
                 new Color32(1, 142, 14, 255),
                 new Color32(194, 178, 128, 255)
             }, world_material);
+
+        v = w.GetVertex(0, 0);
+    }
+
+    void Update()
+    {
+
     }
 
 }

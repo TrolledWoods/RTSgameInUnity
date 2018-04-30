@@ -8,7 +8,7 @@ namespace Assets.Scripts
 {
     public class WorldRenderer
     {
-        static int SectionSize = 200;
+        static int SectionSize = 30;
         
         World game_world;
         
@@ -17,6 +17,8 @@ namespace Assets.Scripts
 
         GameObject mesh_parent;
         MeshController[] controllers;
+        int n_sections_width;
+        int n_sections_height;
 
         public WorldRenderer(GameObject mesh_parent, World game_world, Color32[] vertex_colors, Material material)
         {
@@ -30,6 +32,34 @@ namespace Assets.Scripts
             CreateMesh();
         }
 
+        public void UpdateVertex(Vector2Int vertex_coord)
+        {
+            float section_x = vertex_coord.x / (float)SectionSize;
+            float section_y = vertex_coord.y / (float)SectionSize;
+
+            int top = Mathf.FloorToInt(section_y);
+            int bottom = (top > 0 && (vertex_coord.y - top * SectionSize) == 0) ? top - 1 : top;
+            int right = Mathf.FloorToInt(section_x);
+            int left = (right > 0 && (vertex_coord.x - right * SectionSize) == 0) ? right - 1 : right;
+
+            for (int i = left; i <= right; i++)
+            {
+                for(int j = bottom; j <= top; j++)
+                {
+                    int section_i = i + j * n_sections_width;
+                    controllers[section_i].UpdateVertex(vertex_coord);
+                }
+            }
+        }
+
+        public void UpdateMesh()
+        {
+            for (int i = 0; i < controllers.Length; i++)
+            {
+                controllers[i].UpdateMesh();
+            }
+        }
+
         public void CreateMesh()
         {
             // Clear all objects in the containers array
@@ -41,22 +71,21 @@ namespace Assets.Scripts
                 }
             }
 
-            int n_sections_width = Int_Ceil(game_world.Tile_Width, SectionSize);
-            int n_sections_height = Int_Ceil(game_world.Tile_Height, SectionSize);
+            n_sections_width = Int_Ceil(game_world.Tile_Width, SectionSize);
+            n_sections_height = Int_Ceil(game_world.Tile_Height, SectionSize);
             int current_section = 0;
 
-            int left = 0;
+            int left;
             int right;
-            int bottom;
+            int bottom = 0;
             int top;
 
             controllers = new MeshController[n_sections_width * n_sections_height];
-   
-            for (int i = 0; i < n_sections_width; i++)
-            {
-                bottom = 0;
 
-                for(int j = 0; j < n_sections_height; j++)
+            for (int j = 0; j < n_sections_height; j++)
+            {
+                left = 0;
+                for (int i = 0; i < n_sections_width; i++)
                 {
                     right = left + SectionSize + 1;
                     top = bottom + SectionSize + 1;
@@ -72,16 +101,21 @@ namespace Assets.Scripts
                         vertex_colors, material);
                     controllers[current_section].Container.transform.parent = mesh_parent.transform;
                     
-                    bottom += SectionSize;
+                    left += SectionSize;
                     current_section++;
                 }
-                left += SectionSize;
+                bottom += SectionSize;
             }
         }
 
-        public int Int_Ceil(int a, int b)
+        public static int Int_Ceil(int a, int b)
         {
             return (a / b) + (a % b == 0 ? 0 : 1);
+        }
+
+        static float GetHeight(World.Vertex vert, World w)
+        {
+            return vert.Height - w.Origin;
         }
 
         class MeshController
@@ -102,6 +136,8 @@ namespace Assets.Scripts
 
             int vert_left, vert_right, vert_top, vert_bottom;
             int vert_width, vert_height, tile_width, tile_height;
+
+            Queue<Vector2Int> vertex_update_queue;
 
             public MeshController(int left, int right, int bottom, int top, World game_world, Color32[] vertex_colors, Material material)
             {
@@ -130,13 +166,40 @@ namespace Assets.Scripts
                 
                 Vertex_Colors = vertex_colors;
 
+                vertex_update_queue = new Queue<Vector2Int>();
+
                 // Create arrays
                 colors = new Color32[vert_width * vert_height];
                 vertices = new Vector3[vert_width * vert_height];
-                Debug.Log(vert_width + " " + vert_height);
                 triangles = new int[(vert_width - 1) * (vert_height - 1) * 6];
 
                 CreateMesh();
+            }
+
+            public void UpdateVertex(Vector2Int vertex_coord)
+            {
+                vertex_update_queue.Enqueue(vertex_coord);
+            }
+
+            public void UpdateMesh()
+            {
+                if (vertex_update_queue.Count == 0)
+                    return;
+
+                int local_vert_i;
+
+                while (vertex_update_queue.Count > 0)
+                {
+                    Vector2Int v_coord = vertex_update_queue.Dequeue();
+
+                    local_vert_i = v_coord.x - vert_left + (v_coord.y - vert_bottom) * vert_width;
+                    World.Vertex v = game_world.GetVertex(v_coord.x, v_coord.y);
+
+                    vertices[local_vert_i].y = GetHeight(v, game_world);
+                    colors[local_vert_i] = Vertex_Colors[(int)v.Type.Peek()];
+                }
+                
+                PassMeshProperties();
             }
 
             public void CreateMesh()
@@ -156,8 +219,8 @@ namespace Assets.Scripts
                         global_vert_i = (i + vert_left) + (j + vert_bottom) * game_world.Vertex_Width;
 
                         read_vert = game_world.Vertices[global_vert_i];
-                        vertices[local_vert_i] = new Vector3(i, read_vert.Height, j);
-                        colors[local_vert_i] = Vertex_Colors[(int)read_vert.Type];
+                        vertices[local_vert_i] = new Vector3(i, GetHeight(read_vert, game_world), j);
+                        colors[local_vert_i] = Vertex_Colors[(int)read_vert.Type.Peek()];
                     }
                 }
 
@@ -181,6 +244,11 @@ namespace Assets.Scripts
                     }
                 }
 
+                PassMeshProperties();
+            }
+
+            void PassMeshProperties()
+            {
                 // Set the values of the mesh
                 controlling.Clear();
                 controlling.vertices = vertices;
@@ -194,6 +262,6 @@ namespace Assets.Scripts
                     collider.sharedMesh = controlling;
             }
         }
-
     }
+
 }

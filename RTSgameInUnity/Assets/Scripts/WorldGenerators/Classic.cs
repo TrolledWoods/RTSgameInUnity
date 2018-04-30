@@ -21,25 +21,52 @@ namespace Assets.Scripts.WorldGenerators
             this.water_level = water_level;
         }
 
-        public override World.Vertex Generate_Vertex(int x, int z)
+        public override float GetOrigin() { return water_level + 0.2f; }
+
+        public override World.Vertex[] Generate_World(int width, int height)
         {
-            int tileHeight = Mathf.FloorToInt(Mathf.PerlinNoise(x * roughness, z * roughness) * scale);
-            VertexType tileData = (VertexType)Mathf.FloorToInt(
-                Mathf.Clamp(Mathf.PerlinNoise(x * biome_delta, z * biome_delta) * 
-                (int)VertexType.N_TILES, 0, (int)VertexType.N_TILES - 1));
+            // Generate height map
+            int[] height_map = new int[width * height];
 
-            if (Mathf.Abs(tileHeight - water_level) < 1)
+            int index = 0;
+            for (int j = 0; j < height; j++)
             {
-                tileData = VertexType.Sand;
-            }
-            else if (tileHeight < water_level)
-            {
-                tileData = VertexType.Dirt;
+                for(int i = 0; i < width; i++)
+                {
+                    height_map[index] = 
+                        Mathf.FloorToInt(Mathf.PerlinNoise(i * roughness, j * roughness) * 
+                            scale + water_level - scale - water_level * 3 + 
+                            Mathf.PerlinNoise(
+                            i * biome_delta + 100, 
+                            j * biome_delta + 100) * 
+                            water_level * 6);
+                    height_map[index] = height_map[index] <= 0 ? 1 : height_map[index];
+                    index++;
+                }
             }
 
-            return new World.Vertex(
-                tileHeight,
-                tileData);
+            // Generate vertices
+            World.Vertex[] vertices = new World.Vertex[width * height];
+
+            int len = width * height;
+            for (index = 0; index < len; index++)
+            {
+                Stack<VertexType> vert_stack = new Stack<VertexType>();
+
+                while (vert_stack.Count <= height_map[index])
+                {
+                    if (vert_stack.Count < water_level)
+                        vert_stack.Push(VertexType.Dirt);
+                    else if (vert_stack.Count < water_level + 2)
+                        vert_stack.Push(VertexType.Sand);
+                    else
+                        vert_stack.Push(VertexType.Grass);
+                }
+
+                vertices[index] = new World.Vertex(vert_stack);
+            }
+
+            return vertices;
         }
 
     }
