@@ -33,7 +33,7 @@ namespace Assets.Scripts
         public static Color32[] Tile_Colors;
 
         public float Origin;
-
+        
         public Vertex[] Vertices;
         public Tile[] Tiles;
 
@@ -41,11 +41,13 @@ namespace Assets.Scripts
 
         int tile_width;
         int tile_height;
-
+        
+        // Some properties for the tiles array
         public int Tile_Width { get { return tile_width; } }
         public int Tile_Height { get { return tile_height; } }
         public int Tile_Count { get { return tile_width * tile_height; } }
 
+        // Some properties for the vertices array
         public int Vertex_Width { get { return tile_width + 1; } }
         public int Vertex_Height { get { return tile_height + 1; } }
         public int Vertex_Count { get { return (tile_width + 1) * (tile_height + 1); } }
@@ -57,16 +59,6 @@ namespace Assets.Scripts
 
             this.generator = generator;
             this.Origin = generator.GetOrigin();
-
-            // If the tile colors are not initialized, initialize them with
-            // their default value
-            if(Tile_Colors == null)
-            {
-                Tile_Colors = new Color32[(int)VertexType.N_TILES];
-                Tile_Colors[(int)VertexType.Dirt] = new Color32(120, 72, 0, 255);
-                Tile_Colors[(int)VertexType.Grass] = new Color32(1, 142, 14, 255);
-                Tile_Colors[(int)VertexType.Sand] = new Color32(194, 178, 128, 255);
-            }
 
             Generate_World();
         }
