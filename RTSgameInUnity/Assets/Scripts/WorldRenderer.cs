@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
+using Assets.Scripts.RenderPipeline;
 
 namespace Assets.Scripts
 {
@@ -10,9 +11,8 @@ namespace Assets.Scripts
     {
         static int SectionSize = 30;
         
-        World game_world;
+        RenderingPipeline pipeline;
         
-        Color32[] vertex_colors;
         Material material;
 
         GameObject mesh_parent;
@@ -20,13 +20,11 @@ namespace Assets.Scripts
         int n_sections_width;
         int n_sections_height;
 
-        public WorldRenderer(GameObject mesh_parent, World game_world, Color32[] vertex_colors, Material material)
+        public WorldRenderer(GameObject mesh_parent, RenderingPipeline pipeline, Material material)
         {
             this.mesh_parent = mesh_parent;
-
-            this.vertex_colors = vertex_colors;
-
-            this.game_world = game_world;
+            
+            this.pipeline = pipeline;
             this.material = material;
 
             CreateMesh();
@@ -71,8 +69,8 @@ namespace Assets.Scripts
                 }
             }
 
-            n_sections_width = Int_Ceil(game_world.Tile_Width, SectionSize);
-            n_sections_height = Int_Ceil(game_world.Tile_Height, SectionSize);
+            n_sections_width = Int_Ceil(pipeline.Width, SectionSize);
+            n_sections_height = Int_Ceil(pipeline.Height, SectionSize);
             int current_section = 0;
 
             int left;
@@ -90,15 +88,14 @@ namespace Assets.Scripts
                     right = left + SectionSize + 1;
                     top = bottom + SectionSize + 1;
 
-                    right = right >= game_world.Vertex_Width ? 
-                        game_world.Vertex_Width - 1 : right;
-                    top = top >= game_world.Vertex_Height ? 
-                        game_world.Vertex_Height - 1 : top;
+                    right = right >= pipeline.Width ? 
+                        pipeline.Width - 1 : right;
+                    top = top >= pipeline.Height ? 
+                        pipeline.Height - 1 : top;
 
                     controllers[current_section] = new MeshController(left, right, 
                         bottom, top, 
-                        game_world,
-                        vertex_colors, material);
+                        pipeline, material);
                     controllers[current_section].Container.transform.parent = mesh_parent.transform;
                     
                     left += SectionSize;
@@ -113,20 +110,18 @@ namespace Assets.Scripts
             return (a / b) + (a % b == 0 ? 0 : 1);
         }
 
-        static float GetHeight(World.Vertex vert, World w)
+        static float GetHeight(VisualVertex vert)
         {
-            return vert.Height - w.Origin;
+            return vert.Height;
         }
 
         class MeshController
         {
-            World game_world;
+            RenderingPipeline pipeline;
             
             GameObject container;
             public GameObject Container { get { return container; } }
             
-            public Color32[] Vertex_Colors;
-
             Mesh controlling;
             MeshCollider collider;
 
@@ -139,7 +134,7 @@ namespace Assets.Scripts
 
             Queue<Vector2Int> vertex_update_queue;
 
-            public MeshController(int left, int right, int bottom, int top, World game_world, Color32[] vertex_colors, Material material)
+            public MeshController(int left, int right, int bottom, int top, RenderingPipeline pipeline, Material material)
             {
                 container = new GameObject("World Section", 
                     typeof(MeshRenderer), 
@@ -152,7 +147,7 @@ namespace Assets.Scripts
                 container.GetComponent<MeshRenderer>().material = material;
                 collider = container.GetComponent<MeshCollider>();
 
-                this.game_world = game_world;
+                this.pipeline = pipeline;
 
                 this.vert_left = left;
                 this.vert_right = right;
@@ -164,8 +159,6 @@ namespace Assets.Scripts
                 tile_width = vert_width - 1;
                 tile_height = vert_height - 1;
                 
-                Vertex_Colors = vertex_colors;
-
                 vertex_update_queue = new Queue<Vector2Int>();
 
                 // Create arrays
@@ -193,10 +186,10 @@ namespace Assets.Scripts
                     Vector2Int v_coord = vertex_update_queue.Dequeue();
 
                     local_vert_i = v_coord.x - vert_left + (v_coord.y - vert_bottom) * vert_width;
-                    World.Vertex v = game_world.GetVertex(v_coord.x, v_coord.y);
+                    VisualVertex v = pipeline.GetVertex(v_coord.x, v_coord.y);
 
-                    vertices[local_vert_i].y = GetHeight(v, game_world);
-                    colors[local_vert_i] = Vertex_Colors[(int)v.Type.Peek()];
+                    vertices[local_vert_i].y = GetHeight(v);
+                    colors[local_vert_i] = v.Color;
                 }
                 
                 PassMeshProperties();
@@ -208,7 +201,7 @@ namespace Assets.Scripts
                 int local_vert_i;
                 int global_vert_i;
                 int tri_i;
-                World.Vertex read_vert;
+                VisualVertex read_vert;
 
                 // Create vertices
                 for (int j = 0; j < vert_height; j++)
@@ -216,11 +209,11 @@ namespace Assets.Scripts
                     for (int i = 0; i < vert_width; i++)
                     {
                         local_vert_i = i + j * vert_width;
-                        global_vert_i = (i + vert_left) + (j + vert_bottom) * game_world.Vertex_Width;
+                        global_vert_i = (i + vert_left) + (j + vert_bottom) * pipeline.Width;
 
-                        read_vert = game_world.Vertices[global_vert_i];
-                        vertices[local_vert_i] = new Vector3(i, GetHeight(read_vert, game_world), j);
-                        colors[local_vert_i] = Vertex_Colors[(int)read_vert.Type.Peek()];
+                        read_vert = pipeline.GetVertex(global_vert_i);
+                        vertices[local_vert_i] = new Vector3(i, GetHeight(read_vert), j);
+                        colors[local_vert_i] = read_vert.Color;
                     }
                 }
 
