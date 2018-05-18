@@ -13,17 +13,25 @@ namespace Assets.Scripts.WorldGenerators
         float biome_delta;
         int water_level;
 
+        GenerationTile[][] generationMap;
+
         public Classic(float roughness, float scale, float biome_delta, int water_level)
         {
             this.roughness = roughness;
             this.scale = scale;
             this.biome_delta = biome_delta;
             this.water_level = water_level;
+
+            generationMap = new GenerationTile[((int)VertexType.N_TILES)][];
+            generationMap[(int)VertexType.Grass] = new GenerationTile[] {
+                new GenerationTile(new Tiles.Tree(), 0.01f),
+                new GenerationTile(new Tiles.Grass(), 0.3f)
+            };
         }
 
         public override float GetOrigin() { return water_level + 0.2f; }
 
-        public override World.Vertex[] Generate_World(int width, int height)
+        public override Generated_World Generate_World(GameObject entity_parent, int width, int height)
         {
             // Generate height map
             int[] height_map = new int[width * height];
@@ -66,7 +74,63 @@ namespace Assets.Scripts.WorldGenerators
                 vertices[index] = new World.Vertex(vert_stack);
             }
 
-            return vertices;
+            // Generate tiles
+            World.TileData[] tiles = new World.TileData[(width-1) * (height-1)];
+
+            index = 0;
+            int v_index = 0;
+            for (int j = 0; j < height - 1; j++)
+            {
+                for (int i = 0; i < width - 1; i++)
+                {
+                    GenerationTile[] available = generationMap[(int)vertices[v_index].Type.Peek()];
+
+                    if (available != null)
+                    {
+                        for(int e = 0; e < available.Length; e++)
+                        {
+                            if(UnityEngine.Random.value < available[e].probability)
+                            {
+                                GenerationTile genT = available[e];
+
+                                if (genT.tile.Requirements.ValidateTerrain(vertices, width, height, i, j).Valid)
+                                {
+                                    Tiles.Tile t = genT.tile.CreateInstance(
+                                        entity_parent,
+                                        new Vector3(i, height_map[v_index] + 1, j));
+
+                                    tiles[index] = new World.TileData(t);
+
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    v_index++;
+                    index++;
+                }
+                v_index++;
+            }
+
+            // Instantiate the world
+            Generated_World world = new Generated_World();
+            world.Vertices = vertices;
+            world.Tiles = tiles;
+            world.Entities = new QuadTree(0, 0, width, height);
+
+            return world;
+        }
+
+        class GenerationTile
+        {
+            public Tiles.TileTemplate tile;
+            public float probability;
+
+            public GenerationTile(Tiles.TileTemplate tile, float prob)
+            {
+                this.tile = tile;
+                this.probability = prob;
+            }
         }
 
     }

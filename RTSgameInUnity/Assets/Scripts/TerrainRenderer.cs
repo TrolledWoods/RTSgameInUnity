@@ -7,7 +7,7 @@ using Assets.Scripts.RenderPipeline;
 
 namespace Assets.Scripts
 {
-    public class WorldRenderer
+    public class TerrainRenderer
     {
         static int SectionSize = 30;
         
@@ -20,7 +20,7 @@ namespace Assets.Scripts
         int n_sections_width;
         int n_sections_height;
 
-        public WorldRenderer(GameObject mesh_parent, RenderingPipeline pipeline, Material material)
+        public TerrainRenderer(GameObject mesh_parent, RenderingPipeline pipeline, Material material)
         {
             this.mesh_parent = mesh_parent;
             
@@ -28,6 +28,16 @@ namespace Assets.Scripts
             this.material = material;
 
             CreateMesh();
+        }
+
+        public void ChangeMaterial(Material m)
+        {
+            material = m;
+
+            for(int i = 0; i < controllers.Length; i++)
+            {
+                controllers[i].ChangeMaterial(m);
+            }
         }
 
         public void UpdateVertex(Vector2Int vertex_coord)
@@ -69,8 +79,8 @@ namespace Assets.Scripts
                 }
             }
 
-            n_sections_width = Int_Ceil(pipeline.Width, SectionSize);
-            n_sections_height = Int_Ceil(pipeline.Height, SectionSize);
+            n_sections_width = Int_Ceil_Divide(pipeline.Width, SectionSize);
+            n_sections_height = Int_Ceil_Divide(pipeline.Height, SectionSize);
             int current_section = 0;
 
             int left;
@@ -88,10 +98,10 @@ namespace Assets.Scripts
                     right = left + SectionSize + 1;
                     top = bottom + SectionSize + 1;
 
-                    right = right >= pipeline.Width ? 
-                        pipeline.Width - 1 : right;
+                    right = right > pipeline.Width ? 
+                        pipeline.Width : right;
                     top = top >= pipeline.Height ? 
-                        pipeline.Height - 1 : top;
+                        pipeline.Height : top;
 
                     controllers[current_section] = new MeshController(left, right, 
                         bottom, top, 
@@ -105,7 +115,7 @@ namespace Assets.Scripts
             }
         }
 
-        public static int Int_Ceil(int a, int b)
+        public static int Int_Ceil_Divide(int a, int b)
         {
             return (a / b) + (a % b == 0 ? 0 : 1);
         }
@@ -124,6 +134,7 @@ namespace Assets.Scripts
             
             Mesh controlling;
             MeshCollider collider;
+            MeshRenderer renderer;
 
             Vector3[] vertices;
             Color32[] colors;
@@ -144,7 +155,8 @@ namespace Assets.Scripts
 
                 container.layer = 8;
                 controlling = container.GetComponent<MeshFilter>().mesh;
-                container.GetComponent<MeshRenderer>().material = material;
+                renderer = container.GetComponent<MeshRenderer>();
+                renderer.material = material;
                 collider = container.GetComponent<MeshCollider>();
 
                 this.pipeline = pipeline;
@@ -167,6 +179,11 @@ namespace Assets.Scripts
                 triangles = new int[(vert_width - 1) * (vert_height - 1) * 6];
 
                 CreateMesh();
+            }
+
+            public void ChangeMaterial(Material m)
+            {
+                renderer.material = m;
             }
 
             public void UpdateVertex(Vector2Int vertex_coord)

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
+using Assets.Scripts.Entities;
 
 namespace Assets.Scripts
 {
@@ -25,9 +26,14 @@ namespace Assets.Scripts
             }
         }
 
-        public struct Tile
+        public struct TileData
         {
+            Tiles.Tile tile;
 
+            public TileData(Tiles.Tile t)
+            {
+                tile = t;
+            }
         }
         
         public static Color32[] Tile_Colors;
@@ -35,12 +41,14 @@ namespace Assets.Scripts
         public float Origin;
         
         public Vertex[] Vertices;
-        public Tile[] Tiles;
+        public TileData[] Tiles;
 
         public WorldGenerators.World_Generator generator;
 
         int tile_width;
         int tile_height;
+
+        public QuadTree Entities;
         
         // Some properties for the tiles array
         public int Tile_Width { get { return tile_width; } }
@@ -52,20 +60,23 @@ namespace Assets.Scripts
         public int Vertex_Height { get { return tile_height + 1; } }
         public int Vertex_Count { get { return (tile_width + 1) * (tile_height + 1); } }
 
-        public World(int tile_width, int tile_height, WorldGenerators.World_Generator generator)
+        public World(GameObject entity_parent, int tile_width, int tile_height, WorldGenerators.World_Generator generator)
         {
             this.tile_width = tile_width;
             this.tile_height = tile_height;
 
             this.generator = generator;
             this.Origin = generator.GetOrigin();
-
-            Generate_World();
+            
+            Generate_World(entity_parent);
         }
 
-        public void Generate_World()
+        public void Generate_World(GameObject entity_parent)
         {
-            Vertices = generator.Generate_World(Vertex_Width, Vertex_Height);
+            WorldGenerators.Generated_World w = generator.Generate_World(entity_parent, Vertex_Width, Vertex_Height);
+            Vertices = w.Vertices;
+            Tiles = w.Tiles;
+            Entities = w.Entities;
         }
 
         public void SetVertex(int x, int y, Vertex v)
