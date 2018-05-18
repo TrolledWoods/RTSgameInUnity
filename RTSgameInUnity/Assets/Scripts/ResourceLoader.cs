@@ -6,10 +6,13 @@ public class ResourceLoader : MonoBehaviour {
 
     public static ResourceLoader resources;
 
+    // Buildings
+    public GameObject[] Castles;
+
     // Resources
     public GameObject[] Grass;
     public GameObject[] Trees;
-
+    
     // Easter eggs
     public GameObject[] SandCastles;
 

@@ -27,6 +27,10 @@ namespace Assets.Scripts.WorldGenerators
                 new GenerationTile(new Tiles.Tree(), 0.01f),
                 new GenerationTile(new Tiles.Grass(), 0.3f)
             };
+            generationMap[(int)VertexType.Dirt] = new GenerationTile[]
+            {
+                new GenerationTile(new Tiles.Castle(), 0.001f)
+            };
         }
 
         public override float GetOrigin() { return water_level + 0.2f; }

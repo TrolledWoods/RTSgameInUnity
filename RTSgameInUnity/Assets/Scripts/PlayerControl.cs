@@ -27,7 +27,7 @@ public class PlayerControl : MonoBehaviour {
 
     public int step_size = 15;
 
-    TerrainRequirements requirements;
+    Assets.Scripts.Tiles.TileTemplate tile;
     RequirementRenderer reqRenderer;
     new TerrainRenderer renderer;
 
@@ -38,10 +38,8 @@ public class PlayerControl : MonoBehaviour {
 
         selection_renderer = selection_graphic.GetComponent<MeshRenderer>();
 
-        requirements = new TerrainRequirements(new int[] {
-            0, 0, 0, 0, 0, 0, 0, 0, 0
-        }, 3, 3);
-        reqRenderer = new RequirementRenderer(requirements);
+        tile = new Assets.Scripts.Tiles.Castle();
+        reqRenderer = new RequirementRenderer(tile.Requirements);
         renderer = new TerrainRenderer(selection_graphic, reqRenderer, falseMaterial);
 
         default_layer = (LayerMask.NameToLayer("Default") + 1) << 8;
@@ -77,12 +75,17 @@ public class PlayerControl : MonoBehaviour {
                 int x = Mathf.FloorToInt(hit.point.x);
                 int z = Mathf.FloorToInt(hit.point.z);
 
-                var result = requirements.ValidateTerrain(w, x, z);
+                var result = tile.Requirements.ValidateTerrain(w, x, z);
 
                 if (result.Valid)
                 {
 
                     renderer.ChangeMaterial(trueMaterial);
+
+                    if (Input.GetMouseButton(2))
+                    {
+                        w.BuildTile(x, z, tile);
+                    }
                 }
                 else
                 {

@@ -8,12 +8,12 @@ namespace Assets.Scripts.Tiles
 {
     public class Grass : TileTemplate
     {
-        static TerrainRequirements Requirements = new TerrainRequirements(new int[]
+        static TerrainRequirements _Requirements = new TerrainRequirements(new int[]
         {
             0, 0, 0, 0
         }, 2, 2);
 
-        public Grass() : base(ResourceLoader.resources.Grass, Requirements)
+        public Grass() : base(ResourceLoader.resources.Grass, _Requirements)
         {
             
         }

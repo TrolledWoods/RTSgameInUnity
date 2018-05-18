@@ -77,5 +77,15 @@ namespace Assets.Scripts
         {
             return requirements[i];
         }
+
+        public static TerrainRequirements CreateFlat(int width, int height)
+        {
+            int[] tiles = new int[width * height];
+
+            for (int i = 0; i < tiles.Length; i++)
+                tiles[i] = 0;
+
+            return new TerrainRequirements(tiles, width, height);
+        }
     }
 }

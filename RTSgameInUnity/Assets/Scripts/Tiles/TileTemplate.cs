@@ -26,7 +26,11 @@ namespace Assets.Scripts.Tiles
 
             GameObject obj = new GameObject("ChildEntity");
             obj.transform.parent = visual.transform;
-            obj.transform.position = position;
+            obj.transform.localScale = prefab.transform.localScale;
+            obj.transform.position = position + new Vector3(
+                prefab.transform.localScale.x / 2, 
+                0, 
+                prefab.transform.localScale.z / 2);
             MeshFilter filter = obj.AddComponent<MeshFilter>();
             MeshRenderer renderer = obj.AddComponent<MeshRenderer>();
             filter.mesh = prefab.GetComponent<MeshFilter>().sharedMesh;

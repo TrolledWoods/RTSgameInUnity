@@ -28,7 +28,7 @@ namespace Assets.Scripts
 
         public struct TileData
         {
-            Tiles.Tile tile;
+            public Tiles.Tile tile;
 
             public TileData(Tiles.Tile t)
             {
@@ -42,6 +42,8 @@ namespace Assets.Scripts
         
         public Vertex[] Vertices;
         public TileData[] Tiles;
+
+        GameObject entity_parent;
 
         public WorldGenerators.World_Generator generator;
 
@@ -67,6 +69,8 @@ namespace Assets.Scripts
 
             this.generator = generator;
             this.Origin = generator.GetOrigin();
+
+            this.entity_parent = entity_parent;
             
             Generate_World(entity_parent);
         }
@@ -77,6 +81,39 @@ namespace Assets.Scripts
             Vertices = w.Vertices;
             Tiles = w.Tiles;
             Entities = w.Entities;
+        }
+
+        public void BuildTile(int x, int y, Tiles.TileTemplate template)
+        {
+            int index = x + y * tile_width;
+
+            // Make sure that the requirements are met and that there are no other tiles
+            // that block this tile
+            if (template.Requirements.ValidateTerrain(this, x, y).Valid)
+            {
+                for (int j = 0; j < template.Requirements.Height - 1; j++)
+                {
+                    for (int i = 0; i < template.Requirements.Width - 1; i++)
+                    {
+                        if (Tiles[x + i + (y + j) * tile_width].tile != null)
+                        {
+                            return;
+                        }
+                    }
+                }
+
+                Assets.Scripts.Tiles.Tile t = template.CreateInstance(
+                    entity_parent,
+                    new Vector3(x, GetVertex(x, y).Height, y));
+
+                for (int j = 0; j < template.Requirements.Height; j++)
+                {
+                    for (int i = 0; i < template.Requirements.Width; i++)
+                    {
+                        Tiles[x + i + (y + j) * tile_width].tile = t;
+                    }
+                }
+            }
         }
 
         public void SetVertex(int x, int y, Vertex v)
